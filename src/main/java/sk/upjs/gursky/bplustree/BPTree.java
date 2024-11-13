@@ -811,4 +811,47 @@ public class BPTree<K extends BPKey<K>, O extends BPObject<K, O>> implements Ser
             throw new RuntimeException("Cannot remove from B+tree during iteration.");
         }
     }
+
+	public List<O> intervalQuery(K low, K high) {
+		if (!opened) {
+			throw new ManipulationWithClosedTreeException();
+		}
+		BPLeafNode<K,O> leaf = root.findLeafLeft(low);
+		int position = leaf.binarySearch(low);
+		int index = 0;
+
+		if (position > 0) {
+			while(position > 0 && leaf.entries[position - 1].getKey().compareTo(low) == 0 ) {
+				position --;
+			}
+
+			index = position;
+		}
+
+		if (position < 0) {
+			index = -position - 1;
+		}
+
+		List<O> result = new LinkedList<>();
+
+		while(true) {
+			if (index == leaf.numberOfEntries) {
+				leaf = leaf.getRightNode();
+				index = 0;
+			}
+
+			if (leaf == null) {
+				break;
+			}
+
+			O obj = leaf.entries[index++];
+			if (obj.getKey().compareTo(high) > 0) {
+				break;
+			}
+
+			result.add(obj);
+		}
+
+		return result;
+	}
 }
